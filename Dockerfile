@@ -6,7 +6,7 @@ WORKDIR /usr/src/app
 
 # 3. Install dependencies
 COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+RUN pip3 install --no-cache-dir -r requirements.txt
 
 # 4. Copy source
 COPY ./app ./app

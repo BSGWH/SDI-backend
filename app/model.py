@@ -1,6 +1,5 @@
 from pydantic import BaseModel
 
 
-class MessageRequest(BaseModel):
-    prompt: str
-    max_tokens: int = 256
+class TrackingRequest(BaseModel):
+    tracking_number: str
