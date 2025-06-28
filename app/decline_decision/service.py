@@ -245,20 +245,21 @@ async def check_first_month_rent_and_premium_paid(fnames_and_files):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-async def decline_or_not(folder_path):
-    # Parse all PDFs in the folder
-    results = parse_pdfs_in_folder(folder_path)
+async def decline_or_not(classified_files):
+    ledger_file = ""
+    if "Tenant Ledger" in classified_files.keys():
+        for file in classified_files["Tenant Ledger"]:
+            ledger_file += mark_empty_cells(file)
+    # for fname, resp in results.items():
+    #     if not resp:
+    #         continue
+    #     combined_md = "\n\n".join(
+    #         mark_empty_cells(page.markdown) for page in resp.pages
+    #     )
+    #     fnames_and_files[fname] = combined_md
+    #     print(combined_md)
 
-    fnames_and_files = {}
-    for fname, resp in results.items():
-        if not resp:
-            continue
-        combined_md = "\n\n".join(
-            mark_empty_cells(page.markdown) for page in resp.pages
-        )
-        fnames_and_files[fname] = combined_md
-        print(combined_md)
-    ledger_file = await exact_only_leger_file(fnames_and_files)
+    # ledger_file = await exact_only_leger_file(fnames_and_files)
     # if_all_documents_available = await checking_if_all_documents_available(
     #     fnames_and_files
     # )

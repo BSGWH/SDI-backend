@@ -4,9 +4,22 @@ import logging
 from mistralai import Mistral
 from dotenv import load_dotenv
 import re
+from app.classify.service import classify_files
+from mistralai.models.ocrresponse import OCRResponse
+import json
+import os
+from anthropic import Anthropic
+from app.classify_items.service import classify_items
 
 load_dotenv()
 logger = logging.getLogger(__name__)
+
+
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
+if not ANTHROPIC_API_KEY:
+    raise RuntimeError("Missing ANTHROPIC_API_KEY")
+
+client = Anthropic(api_key=ANTHROPIC_API_KEY)
 
 EXTENSIONS = (".pdf", ".docx", ".pptx")
 SKIP_PREFIXES = ("~$", ".")
@@ -36,7 +49,7 @@ def parse_pdf(pdf_path: str) -> dict | None:
 
     client = Mistral(api_key=api_key)
     try:
-        return client.ocr.process(
+        resp = client.ocr.process(
             model="mistral-ocr-latest",
             document={
                 "type": "document_url",
@@ -44,6 +57,10 @@ def parse_pdf(pdf_path: str) -> dict | None:
             },
             include_image_base64=True,
         )
+        page = resp.pages
+        all_markdowns = [p.markdown for p in page]
+        full_text = "\n\n".join(all_markdowns)
+        return full_text
     except Exception as e:
         logger.error(f"OCR processing failed for {pdf_path}: {e}")
         return None
@@ -66,7 +83,17 @@ def parse_pdfs_in_folder(folder_path: str) -> dict[str, dict]:
 
 
 if __name__ == "__main__":
-    folder = "/Users/weihao/Library/CloudStorage/GoogleDrive-weihao.gu1994@gmail.com/.shortcut-targets-by-id/1-sEEs61X3q7AG8MV6y6wlX637KLOnMs4/all_docs/953"
+    folder = "/Users/weihao/Library/CloudStorage/GoogleDrive-weihao.gu1994@gmail.com/.shortcut-targets-by-id/1-sEEs61X3q7AG8MV6y6wlX637KLOnMs4/all_docs/850"
     responses = parse_pdfs_in_folder(folder)
-    for fname, resp in responses.items():
-        print(f"{fname} → {resp}\n")
+    classified_files = classify_files(responses, client, "850")
+
+    if "Claim Evaluation Report" in classified_files.keys():
+        claim_file = "\n".join(classified_files["Claim Evaluation Report"])
+        print(f"Claim Evaluation Report: {claim_file}")
+    else:
+        claim_file = (
+            "\n".join(classified_files["Tenant Ledger"])
+            if "Tenant Ledger" in classified_files.keys()
+            else ""
+        )
+    classified_items = classify_items(claim_file, client, "850")
