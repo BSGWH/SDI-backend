@@ -45,6 +45,9 @@ def calculate_claim(
             total_claim += amount
         elif category in NOT_COVERED_CATEGORIES:
             not_covered_items += f"{item}, "
+        elif category == "CREDIT":
+            calculation_process += f"-{amount} ({item}credit) "
+            total_claim -= amount
     if total_claim > max_benefit:
         total_claim = max_benefit
         calculation_process += f" (capped at max benefit {max_benefit})"

@@ -83,17 +83,25 @@ def parse_pdfs_in_folder(folder_path: str) -> dict[str, dict]:
 
 
 if __name__ == "__main__":
-    folder = "/Users/weihao/Library/CloudStorage/GoogleDrive-weihao.gu1994@gmail.com/.shortcut-targets-by-id/1-sEEs61X3q7AG8MV6y6wlX637KLOnMs4/all_docs/850"
+    folder = "/Users/weihao/Library/CloudStorage/GoogleDrive-weihao.gu1994@gmail.com/.shortcut-targets-by-id/1-sEEs61X3q7AG8MV6y6wlX637KLOnMs4/all_docs/845"
     responses = parse_pdfs_in_folder(folder)
-    classified_files = classify_files(responses, client, "850")
-
+    classified_files = classify_files(responses, client, "845")
+    if (
+        "Tenant Ledger" not in classified_files.keys()
+        and "Claim Evaluation Report" in classified_files.keys()
+    ):
+        classified_files["Tenant Ledger"] = classified_files["Claim Evaluation Report"]
+    is_ledger = False
     if "Claim Evaluation Report" in classified_files.keys():
         claim_file = "\n".join(classified_files["Claim Evaluation Report"])
-        print(f"Claim Evaluation Report: {claim_file}")
+        print(
+            f"****There is Claim Evaluation Report and Claim Evaluation Report is: {claim_file}"
+        )
     else:
         claim_file = (
             "\n".join(classified_files["Tenant Ledger"])
             if "Tenant Ledger" in classified_files.keys()
             else ""
         )
-    classified_items = classify_items(claim_file, client, "850")
+        is_ledger = True
+    classified_items = classify_items(claim_file, client, is_ledger, "845")

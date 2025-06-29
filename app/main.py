@@ -10,7 +10,7 @@ from app.parsing_docs.service import parse_pdfs_in_folder
 from app.classify.service import classify_files
 from app.classify_items.service import classify_items
 from app.calculate_claim.service import calculate_claim
-from app.read_csv.service import get_amount_of_claim
+from app.read_csv.service import get_amount_of_claim, get_approved_benefit_amount
 import pandas as pd
 
 load_dotenv()
@@ -44,6 +44,15 @@ async def first_decision(req: TrackingRequest):
         global classified_files
         parsed_files = parse_pdfs_in_folder(folder)
         classified_files = classify_files(parsed_files, client, req.tracking_number)
+
+        # Handle special case where "Tenant Ledger" is missing but "Claim Evaluation Report" exists
+        if (
+            "Tenant Ledger" not in classified_files.keys()
+            and "Claim Evaluation Report" in classified_files.keys()
+        ):
+            classified_files["Tenant Ledger"] = classified_files[
+                "Claim Evaluation Report"
+            ]
         print(f"Classified files: {classified_files}")
         result = await decline_or_not(classified_files)
         return result
@@ -54,22 +63,28 @@ async def first_decision(req: TrackingRequest):
 @app.post("/calulate_amount")
 async def sec_decision(req: TrackingRequest):
     try:
+        is_ledger = False
         if "Claim Evaluation Report" in classified_files.keys():
             claim_file = "\n".join(classified_files["Claim Evaluation Report"])
-            print(f"Claim Evaluation Report: {claim_file}")
+            print(
+                f"****There is Claim Evaluation Report and Claim Evaluation Report is: {claim_file}"
+            )
         else:
             claim_file = (
                 "\n".join(classified_files["Tenant Ledger"])
                 if "Tenant Ledger" in classified_files.keys()
                 else ""
             )
+            is_ledger = True
         classified_items, max_benefit, rent = classify_items(
-            claim_file, client, req.tracking_number
+            claim_file, client, is_ledger, req.tracking_number
         )
         amount_of_claim = get_amount_of_claim(req.tracking_number)
         calculated_claim = calculate_claim(
             classified_items, max_benefit, rent, amount_of_claim
         )
+        approved_benefit = get_approved_benefit_amount(req.tracking_number)
+        calculated_claim["real_approved_benefit"] = approved_benefit
         print(f"  -> Calculated claim: {calculated_claim}")
         return calculated_claim
     except Exception as e:

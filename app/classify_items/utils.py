@@ -15,6 +15,7 @@ STANDARD_CATEGORIES = {
     "PEST": "Pest control services",
     "TRASH": "Trash removal or disposal",
     "ADMIN": "Administrative fees or taxes",
+    "CREDIT": "Credits or refunds applied to tenant account",
     "OTHER": "Items that don't fit other categories",
 }
 
@@ -37,3 +38,4 @@ PARTIALLY_COVERED_CATEGORIES = {
     "LEASE_BREAK",
 }
 NOT_COVERED_CATEGORIES = {"NORMAL_WEAR_AND_TEAR", "PET", "ADMIN"}
+CREDIT_CATEGORIES = {"CREDIT"}

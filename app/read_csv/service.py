@@ -104,6 +104,33 @@ def get_amount_of_claim(tracking_number: str):
         )
 
 
+def get_approved_benefit_amount(tracking_number: str):
+    print(f"Getting approved benefit amount for tracking number: {tracking_number}")
+    # here is where you give pandas the path
+    df = pd.read_csv(path, sep=None, engine="python", encoding="utf-8-sig")
+
+    df.columns = df.columns.str.strip().str.replace("\ufeff", "")
+    df["Tracking Number"] = df["Tracking Number"].astype(str)
+    matched = df.loc[
+        df["Tracking Number"] == tracking_number, "Approved Benefit Amount"
+    ]
+    if matched.empty:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No approved benefit amount found for tracking number {tracking_number}",
+        )
+
+    raw = matched.iloc[0]
+    try:
+        cleaned = str(raw).replace("$", "").replace(",", "")
+        return float(cleaned)
+    except ValueError:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Could not parse approved benefit amount '{raw}' for {tracking_number}",
+        )
+
+
 if __name__ == "__main__":
     print(get_claim_amount("811"))
 
