@@ -226,20 +226,22 @@ async def check_first_month_rent_and_premium_paid(fnames_and_files):
             max_tokens=2000,
         )
 
-        raw = response.content
-        if isinstance(raw, list):
-            raw = "".join(
-                block.text if hasattr(block, "text") else str(block) for block in raw
-            )
-        elif hasattr(raw, "text"):
-            raw = raw.text
-
-        print(raw)
-        # print(type(raw))
-        parsed = json.loads(raw)
-        # print(parsed)
-        # print(type(parsed))
-        return parsed
+        raw = response.content[0].text.strip()
+        # if isinstance(raw, list):
+        #     raw = "".join(
+        #         block.text if hasattr(block, "text") else str(block) for block in raw
+        #     )
+        # elif hasattr(raw, "text"):
+        #     raw = raw.text
+        print("Raw response:", raw)
+        match = re.search(r"\{.*\}", raw, re.DOTALL)
+        if match:
+            json_str = match.group(0)
+            parsed_decline_decision = json.loads(json_str)
+            print(f"  -> Parsed decline decision: {parsed_decline_decision}")
+            return parsed_decline_decision
+        else:
+            print("No JSON found in response.")
 
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

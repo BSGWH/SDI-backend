@@ -10,6 +10,7 @@ from app.parsing_docs.service import parse_pdfs_in_folder
 from app.classify.service import classify_files
 from app.classify_items.service import classify_items
 from app.calculate_claim.service import calculate_claim
+from app.read_csv.service import get_amount_of_claim
 import pandas as pd
 
 load_dotenv()
@@ -65,8 +66,10 @@ async def sec_decision(req: TrackingRequest):
         classified_items, max_benefit, rent = classify_items(
             claim_file, client, req.tracking_number
         )
-
-        calculated_claim = calculate_claim(classified_items, max_benefit, rent)
+        amount_of_claim = get_amount_of_claim(req.tracking_number)
+        calculated_claim = calculate_claim(
+            classified_items, max_benefit, rent, amount_of_claim
+        )
         print(f"  -> Calculated claim: {calculated_claim}")
         return calculated_claim
     except Exception as e:
